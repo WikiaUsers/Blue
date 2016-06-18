@@ -1,4 +1,4 @@
-package com.blue.interfaces;
+package com.blue.bot.interfaces;
 
 interface BlueMessageInterface {
     String getMessage();

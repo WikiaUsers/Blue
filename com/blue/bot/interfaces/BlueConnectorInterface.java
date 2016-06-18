@@ -1,6 +1,7 @@
-package com.blue.interfaces;
+package com.blue.bot.interfaces;
 
-import com.blue.classes.BlueMessage;
+import com.blue.bot.classes.BlueMessage;
+import com.blue.bot.classes.BlueConnectorInfo;
 
 /**
  * To do:
@@ -9,7 +10,7 @@ import com.blue.classes.BlueMessage;
  */
 
 interface BlueConnectorInterface {
-    void initialize();                                                          // Initialize connections, joins, etc
+    void initialize(BlueConnectorInfo info);                                    // Initialize connections, joins, etc
     boolean hasMessages();                                                      // Should return whether or not there are messages in the queued
     boolean hasModerator();                                                     // Should return whether or not the current user is a moderator
     Array<BlueMessage> getMessages();                                           // Messages should be queued so that we can retrieve them periodically
