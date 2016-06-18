@@ -1,6 +1,6 @@
-package com.blue.classes;
+package com.blue.bot.classes;
 
-import com.blue.interfaces.BlueMessageInterface;
+import com.blue.bot.interfaces.BlueMessageInterface;
 
 class BlueMessage implements BlueMessageInterface {
     private String message;
