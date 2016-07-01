@@ -1,0 +1,14 @@
+{
+    "kocka": {
+        "account": "Account1",
+        "plugins": {
+            "com.blue.tests.TestPlugin": {
+                "a": "b",
+                "c": "d"
+            }
+        }
+    },
+    "undertale": {
+        "account": "Account1"
+    }
+}
