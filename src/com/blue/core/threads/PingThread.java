@@ -8,13 +8,14 @@ import com.mashape.unirest.http.exceptions.UnirestException;
  */
 public class PingThread extends Thread {
 	
-	Room room;
+	private Room room;
+	private boolean dead;
 	
 	/**
 	 * Class constructor
 	 * @param  room  reference to the room object
 	 */
-	public PingThread(Room room) {
+	public PingThread(final Room room) {
 		super();
 		this.room = room;
 	}
@@ -25,10 +26,15 @@ public class PingThread extends Thread {
 	 */
 	public void run() {
 		super.run();
-		while(true) {
+		while(!dead) {
 			try { room.ping(); }
 			catch(UnirestException e) { e.printStackTrace(); }
 		}
 	}
+	
+	/**
+	 * Kills the thread
+	 */
+	public void kill() { dead = true; }
 	
 }

@@ -32,11 +32,8 @@ public abstract class Room {
 	
 	// TODO: I dunno how to use Javadoc to document variables lmao
 	private final String SESSION_RESET = "Session ID unknown";
-	// TODO: This regex doesn't work if multiple packets are received in one body
-	private final Pattern bodyRegex = Pattern.compile("(?:\\x00.+?\\xFF(.+?))+$");
 	
 	protected int id;
-	protected int mid;
 	protected String subdomain;
 	protected String baseURI;
 	protected Account user;
@@ -49,6 +46,7 @@ public abstract class Room {
 	private PingThread pingThread;
 	private List<MessageThread> threads;
 	private boolean initialized;
+	private boolean dead;
 	
 	/**
 	 * ===============================================================================
@@ -63,9 +61,8 @@ public abstract class Room {
 	 * @param subdomain  the subdomain room is running on
 	 * @param account    the account room is using
 	 */
-	public Room(int id, int mid, String subdomain, String account) {
+	public Room(int id, String subdomain, String account) {
 		this.id = id;
-		this.mid = mid;
 		this.isPrivate = !(id == -1);
 		this.subdomain = subdomain;
 		this.user = AccountManager.getAccount(account);
@@ -83,8 +80,10 @@ public abstract class Room {
 		try {
 			HttpResponse<String> response = get();
 			options.put("sid", new JSONObject(response.getBody().substring(5)).getString("sid"));
-			System.out.println(response.getHeaders().get("set-cookie"));
-			// headers.put("Cookie", response.getHeaders().get("set-cookie"));
+			List<String> setCookie = response.getHeaders().get("Set-Cookie");
+			String cookies = "";
+			for(String cookie : setCookie) cookies += cookie + ", ";
+			headers.put("Cookie", cookies.substring(0, cookies.length() - 2));
 			mainThread = new RoomThread(this);
 			mainThread.run();
 		}
@@ -98,10 +97,12 @@ public abstract class Room {
 	 * @throws UnirestException  if connection didn't succeed
 	 */
 	private HttpResponse<String> get() throws UnirestException {
+		System.out.println(options);
+		System.out.println(headers);
 		return Unirest.get(baseURI)
 			.headers(headers)
 			.queryString(options)
-			.queryString("deathToCache", Util.getCacheBuster())
+			.queryString("t", Util.getCacheBuster())
 			.asString();
 	}
 	
@@ -113,19 +114,21 @@ public abstract class Room {
 		try {
 			HttpResponse<String> response = get();
 			String body = response.getBody();
-			Matcher m = bodyRegex.matcher(body);
-			if(!m.matches() && body.indexOf(SESSION_RESET) > -1) {
+			int index = body.indexOf((char)65533);
+			if(body.toCharArray()[0] != (char)0 && index == -1 && body.indexOf(SESSION_RESET) > -1) {
 				// TODO: Handle a reset of the session
 				// Probably close the thread and delete the room from the room array
 				// Unless if the room was the main room, in that case, restart it
+				System.out.println("Session reset");
 				kill();
 				return;
 			}
-			while(m.find()) {
-				String message = m.group(1);
-				if(message.length() > 2 && message.substring(0, 2) == "42")
-					threads.add(new MessageThread(this, message.substring(2), threads.size()));
+			String message = body.substring(index + 1);
+			if(message.length() > 2 && message.substring(0, 2).equals("42")) {
+				threads.add(new MessageThread(this, message.substring(2), threads.size()));
+				threads.get(threads.size() - 1).run();
 			}
+				
 		}
 		catch(UnirestException e) { e.printStackTrace(); }
 	}
@@ -141,10 +144,12 @@ public abstract class Room {
 	 * @param  message  received message in JSON format
 	 */
 	public void onPacket(String message) {
+		if(dead) return;
 		try {
+			System.out.println(message);
 			JSONObject msg = new JSONArray(message).getJSONObject(1);
 			String event = msg.getString("event");
-			JSONObject data = msg.getJSONObject("data");
+			JSONObject data = new JSONObject(msg.getString("data"));
 			JSONObject attrs = data.getJSONObject("attrs");
 			// TODO: Ewwwwwwwwwwwww
 			switch(event) {
@@ -211,7 +216,7 @@ public abstract class Room {
 	 * @param  sender   user that sent the message
 	 */
 	private void onMessage(String message, User sender) {
-		for(Plugin p : plugins) p.onMessage(this, sender, message);
+		// for(Plugin p : plugins) p.onMessage(this, sender, message);
 	}
 	
 	/**
@@ -220,6 +225,7 @@ public abstract class Room {
 	 * @param  data  initial data
 	 */
 	private void onInitial(JSONObject data) {
+		System.out.println("Initial");
 		try {
 			JSONArray usersArray = data.getJSONObject("collections").getJSONObject("users").getJSONArray("models");
 			for(int i = 0; i < usersArray.length(); ++i) {
@@ -235,7 +241,7 @@ public abstract class Room {
 			initialized = true;
 			pingThread = new PingThread(this);
 			pingThread.run();
-			for(Plugin p : plugins) p.onInitial(this);
+			// for(Plugin p : plugins) p.onInitial(this);
 		}
 		catch(JSONException e) { e.printStackTrace(); }
 	}
@@ -245,13 +251,13 @@ public abstract class Room {
 	 * @param  user  user that joined
 	 */
 	private void onJoin(User user) {
-		if(user.name == this.user.name && !initialized) {
+		if(user.name.equals(this.user.name) && !initialized) {
 			try { postCommand(new JSONObject(), "initquery"); }
 			catch(UnirestException e) { e.printStackTrace(); }
 			catch(JSONException e) { e.printStackTrace(); }
 		}
 		users.put(user.name, user);
-		for(Plugin p : plugins) p.onJoin(this, user);
+		// for(Plugin p : plugins) p.onJoin(this, user);
 	}
 	
 	/**
@@ -260,7 +266,7 @@ public abstract class Room {
 	 */
 	private void onPart(User user) {
 		users.remove(user);
-		for(Plugin p : plugins) p.onPart(this, user);
+		// for(Plugin p : plugins) p.onPart(this, user);
 	}
 	
 	/**
@@ -269,7 +275,7 @@ public abstract class Room {
 	 */
 	private void onLogout(User user) {
 		users.remove(user);
-		for(Plugin p : plugins) p.onLogout(this, user);
+		// for(Plugin p : plugins) p.onLogout(this, user);
 	}
 	
 	/**
@@ -278,7 +284,7 @@ public abstract class Room {
 	 * @param  executor  moderator that kicked the user
 	 */
 	private void onKick(User user, User executor) {
-		for(Plugin p : plugins) p.onKick(this, user, executor);
+		// for(Plugin p : plugins) p.onKick(this, user, executor);
 	}
 	
 	/**
@@ -289,7 +295,7 @@ public abstract class Room {
 	 * @param  length    ban length
 	 */
 	private void onBan(User user, User executor, String length, String reason) {
-		for(Plugin p : plugins) p.onBan(this, user, executor, reason, length);
+		// for(Plugin p : plugins) p.onBan(this, user, executor, reason, length);
 	}
 	
 //	private void onUpdateUser() {
@@ -316,12 +322,22 @@ public abstract class Room {
 	 * @param   body              the body for the POST request
 	 * @throws  UnirestException  if the request was unsuccessful
 	 */
-	private void post(String body) throws UnirestException {
+	private void post(JSONObject body) throws UnirestException, JSONException {
+		System.out.println(options);
+		System.out.println(headers);
 		Unirest.post(baseURI)
 			.headers(headers)
 			.queryString(options)
-			.queryString("deathToCache", Util.getCacheBuster())
-			.body(body)
+			.queryString("t", Util.getCacheBuster())
+			.body(body == null ? "2" : "42" +
+				new JSONArray()
+					.put("message")
+					.put(new JSONObject()
+						.put("id", JSONObject.NULL)
+						.put("attrs", body)
+						.toString()
+					)
+			)
 			.asString();
 	}
 	
@@ -331,16 +347,7 @@ public abstract class Room {
 	 * @throws  UnirestException  if the request was unsuccessful
 	 * @throws  JSONException     if JSON wasn't able to be handled correctly
 	 */
-	private void post(JSONObject body, String msgType) throws UnirestException, JSONException {
-		post("42" + new JSONArray()
-			.put("message")
-			.put(new JSONObject()
-				.put("id", JSONObject.NULL)
-				.put("attrs", body.put("msgType", msgType))
-			)
-			.toString()
-		);
-	}
+	private void post(JSONObject body, String msgType) throws UnirestException, JSONException { post(body.put("msgType", msgType)); }
 	
 	/**
 	 * Sends a ping to the chat server.
@@ -350,7 +357,10 @@ public abstract class Room {
 	 * @throws  UnirestException    if the request was unsuccessful
 	 * @see     {@code PingThread}
 	 */
-	public void ping() throws UnirestException { post("2"); }
+	public void ping() throws UnirestException {
+		try { post(null); }
+		catch(JSONException e) { /* This will literally never happen lol */ }
+	}
 	
 	/**
 	 * POSTs a command to the chat server
@@ -454,10 +464,12 @@ public abstract class Room {
 	 */
 	private void kill() {
 		try {
-			pingThread.join();
-			mainThread.join();
+			dead = true;
+			if(pingThread != null) pingThread.kill();
+			mainThread.kill();
 			for(MessageThread t : threads) t.join();
-			for(Plugin p : plugins) p.onRoomExit(this);
+			// for(Plugin p : plugins) p.onRoomExit(this);
+			System.out.println("Ded");
 		}
 		catch(InterruptedException e) { e.printStackTrace(); }
 	}
@@ -473,12 +485,6 @@ public abstract class Room {
 	 * @return  the room's iD
 	 */
 	public int getId() { return this.id; }
-	
-	/**
-	 * Getter for {@code mid}
-	 * @return  the room's index in {@code RoomManager.rooms} array
-	 */
-	public int getMId() { return this.mid; }
 	
 	/**
 	 * Getter for {@code isPrivate}

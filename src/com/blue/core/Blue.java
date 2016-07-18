@@ -15,6 +15,9 @@ public class Blue {
 	 * Class constructor
 	 */
 	public Blue() {
-		// TODO: Everything
+		AccountManager.init();
+		RoomManager.init();
+		PluginManager.init();
+		DataManager.init("1");
 	}
 }

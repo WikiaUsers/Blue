@@ -25,7 +25,7 @@ public class RoomManager {
 	 * @param  account    account name to use for connecting to the wiki
 	 */
 	public static void addMainRoom(String subdomain, String account) {
-		rooms.add(new MainRoom(rooms.size(), subdomain, account));
+		rooms.add(new MainRoom(subdomain, account));
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class RoomManager {
 	 * @param  users      list of users in the room
 	 */
 	public static void addPrivateRoom(int id, String subdomain, Room mainRoom, Map<String, User> users) {
-		rooms.add(new PrivateRoom(id, rooms.size(), subdomain, (MainRoom)mainRoom, users));
+		rooms.add(new PrivateRoom(id, subdomain, (MainRoom)mainRoom, users));
 	}
 	
 }

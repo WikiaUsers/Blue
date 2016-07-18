@@ -5,7 +5,7 @@
     <!--define folder properties-->
     <property name="dir.buildfile" value="."/>
     <property name="dir.workspace" value="${dir.buildfile}/.."/>
-    <property name="dir.jarfile" value="C:/Users/benja/Desktop"/>
+    <property name="dir.jarfile" value="C:/Users/Pera/Desktop"/>
     <target name="create_run_jar">
         <jar destfile="${dir.jarfile}/blue.jar">
             <manifest>

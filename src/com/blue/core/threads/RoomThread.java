@@ -7,13 +7,14 @@ import com.blue.core.Room;
  */
 public class RoomThread extends Thread {
 	
-	Room room;
+	private final Room room;
+	private boolean ded;
 	
 	/**
 	 * Class constructor
 	 * @param  room  reference to the room to update
 	 */
-	public RoomThread(Room room) {
+	public RoomThread(final Room room) {
 		super();
 		this.room = room;
 	}
@@ -26,7 +27,12 @@ public class RoomThread extends Thread {
 		super.run();
 		// TODO: Add a return value to the update method
 		// so the loop isn't infinite
-		while(true) room.update();
+		while(!ded) room.update();
 	}
+	
+	/**
+	 * Kills the thread
+	 */
+	public void kill() { ded = true; }
 	
 }

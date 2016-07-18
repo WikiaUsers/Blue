@@ -1,5 +1,6 @@
 package com.blue.core;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -15,7 +16,9 @@ public class PluginManager {
 	/**
 	 * Initializer
 	 */
-	public static void init() { /* TODO: Implement */}
+	public static void init() {
+		plugins = new HashMap<String, Plugin[]>();
+	}
 	
 	/**
 	 * Initializes all plugins with their configurations

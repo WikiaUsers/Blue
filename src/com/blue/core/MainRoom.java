@@ -23,8 +23,8 @@ public class MainRoom extends Room {
 	 * @param  subdomain  wiki's subdomain
 	 * @param  account    account to use to connect
 	 */
-	public MainRoom(int mid, String subdomain, String account) {
-		super(-1, mid, subdomain, account);
+	public MainRoom(String subdomain, String account) {
+		super(-1, subdomain, account);
 		setup();
 	}
 	
@@ -58,7 +58,7 @@ public class MainRoom extends Room {
 	private void setupOptions() {
 		options = new HashMap<String, Object>();
 		options.put("name", user.name);
-		options.put("EIO", "2"); // Becuz I can :^)
+		options.put("EIO", "3");
 		options.put("transport", "polling");
 	}
 	

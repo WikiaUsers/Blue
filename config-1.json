@@ -1,14 +1,11 @@
 {
     "kocka": {
-        "account": "Account1",
+        "account": "MTT News Reporter",
         "plugins": {
             "com.blue.tests.TestPlugin": {
                 "a": "b",
                 "c": "d"
             }
         }
-    },
-    "undertale": {
-        "account": "Account1"
     }
 }

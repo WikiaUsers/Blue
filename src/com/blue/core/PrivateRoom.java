@@ -15,8 +15,8 @@ public class PrivateRoom extends Room {
 	 * @param  mainRoom   main room of the wiki
 	 * @param  users      users in the room
 	 */
-	public PrivateRoom(int id, int mid, String subdomain, MainRoom mainRoom, Map<String, User> users) {
-		super(id, mid, subdomain, mainRoom.getUser());
+	public PrivateRoom(int id, String subdomain, MainRoom mainRoom, Map<String, User> users) {
+		super(id, subdomain, mainRoom.getUser());
 		headers = mainRoom.getHeaders();
 		options = mainRoom.getOptions();
 		this.users = users;

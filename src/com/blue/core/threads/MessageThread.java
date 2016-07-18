@@ -7,9 +7,9 @@ import com.blue.core.Room;
  */
 public class MessageThread extends Thread {
 	
-	private Room room;
-	private String message;
-	private int index;
+	private final Room room;
+	private final String message;
+	private final int index;
 	
 	/**
 	 * Class constructor
@@ -18,7 +18,7 @@ public class MessageThread extends Thread {
 	 * @param  message  message to process
 	 * @param  index    index of the thread in threads array
 	 */
-	public MessageThread(Room room, String message, int index) {
+	public MessageThread(final Room room, final String message, final int index) {
 		super();
 		this.room = room;
 		this.message = message;

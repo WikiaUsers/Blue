@@ -52,7 +52,7 @@ public class DataManager {
 		
 			// Iterating through the configuration file
 			Iterator<?> keys = result.keys();
-		
+			
 			while(keys.hasNext()) {
 				String subdomain = (String)keys.next();
 				JSONObject data = result.getJSONObject(subdomain);
